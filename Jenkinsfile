@@ -20,20 +20,20 @@ pipeline {
 
     stage('Dependency Validation') {
       steps {
-        bat 'python -V'
-        bat 'python -c "import langchain, langchain_groq, pandas, streamlit, datasets, ragas; print(\"core_deps_ok\")"'
+        sh 'python3 -V'
+        sh 'python3 -c "import langchain, langchain_groq, pandas, streamlit, datasets, ragas; print(\\"core_deps_ok\\")"'
       }
     }
 
     stage('Unit Validation') {
       steps {
-        bat 'python -m unittest discover -s tests -p "test_*.py" -v'
+        sh 'python3 -m unittest discover -s tests -p "test_*.py" -v'
       }
     }
 
     stage('RAG + RAGAS Validation') {
       steps {
-        bat 'python validate_rag_pipeline.py --config ci/validation_config.json --out %VALIDATION_REPORT%'
+        sh 'python3 validate_rag_pipeline.py --config ci/validation_config.json --out $VALIDATION_REPORT'
       }
       post {
         always {
@@ -44,7 +44,7 @@ pipeline {
 
     stage('AI Quality Gate') {
       steps {
-        bat 'python ci/gate_validation.py --report %VALIDATION_REPORT%'
+        sh 'python3 ci/gate_validation.py --report $VALIDATION_REPORT'
       }
     }
 
