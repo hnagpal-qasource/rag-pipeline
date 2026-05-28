@@ -1,8 +1,12 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
 [project]
 name = "rag-telecom-chatbot"
 version = "0.1.0"
 description = "RAG-based telecom customer care chatbot tutorial"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "langchain",
     "langchain-core",
@@ -14,4 +18,9 @@ dependencies = [
     "pypdf",
     "langchain-community",
     "langchain-text-splitters",
+    "datasets",
+    "ragas",
 ]
+
+[tool.setuptools.packages.find]
+include = ["ci*", "validation*"]

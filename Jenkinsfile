@@ -2,12 +2,12 @@ pipeline {
   parameters {
     string(
       name: 'NODE_LABEL',
-      defaultValue: 'linux',
+      defaultValue: 'copper-dev-10.10.12.78',
       description: 'Jenkins agent label (e.g. linux, windows, copper-dev-10.10.12.78)'
     )
     choice(
       name: 'NODE_OS',
-      choices: ['linux', 'windows'],
+      choices: ['windows', 'linux'],
       description: 'OS type of the target agent — controls whether bat or sh is used'
     )
   }
