@@ -32,12 +32,13 @@ pipeline {
     }
 
     stage('Install Dependencies') {
+      options { timeout(time: 15, unit: 'MINUTES') }
       steps {
         script {
           if (params.NODE_OS == 'windows') {
-            bat 'python -m pip install -e . --quiet --upgrade'
+            bat 'python -m pip install -e . --upgrade'
           } else {
-            sh 'python3 -m pip install -e . --quiet --upgrade'
+            sh 'python3 -m pip install -e . --upgrade'
           }
         }
       }
