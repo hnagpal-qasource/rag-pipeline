@@ -1,0 +1,44 @@
+{
+  "started_at": "2026-05-27T09:03:10.267439+00:00",
+  "config": {
+    "thresholds": {
+      "retrieval_relevance": 0.65,
+      "groundedness": 0.6,
+      "faithfulness": 0.65,
+      "answer_relevancy": 0.65,
+      "context_precision": 0.6,
+      "context_recall": 0.6
+    },
+    "min_cases": 3,
+    "require_ragas": true
+  },
+  "preflight": {
+    "env_GROQ_API_KEY": {
+      "ok": true,
+      "value_present": true
+    },
+    "env_HF_TOKEN": {
+      "ok": true,
+      "value_present": true
+    },
+    "embeddings_init": {
+      "ok": true
+    },
+    "vector_collections": {
+      "ok": false,
+      "store_dir": "D:\\RAG\\RAG AI APP\\rag-telecom-chatbot\\chroma_store",
+      "file_count": 0
+    },
+    "ragas_installed": {
+      "ok": true
+    }
+  },
+  "cases": [],
+  "aggregate": {},
+  "ragas": {},
+  "status": "failed",
+  "errors": [
+    "Preflight checks failed"
+  ],
+  "finished_at": "2026-05-27T09:03:18.991321+00:00"
+}

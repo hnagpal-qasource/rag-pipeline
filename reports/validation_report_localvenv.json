@@ -1,0 +1,44 @@
+{
+  "started_at": "2026-05-27T08:27:52.742484+00:00",
+  "config": {
+    "thresholds": {
+      "retrieval_relevance": 0.65,
+      "groundedness": 0.6,
+      "faithfulness": 0.65,
+      "answer_relevancy": 0.65,
+      "context_precision": 0.6,
+      "context_recall": 0.6
+    },
+    "min_cases": 3,
+    "require_ragas": true
+  },
+  "preflight": {
+    "env_GROQ_API_KEY": {
+      "ok": true,
+      "value_present": true
+    },
+    "env_HF_TOKEN": {
+      "ok": true,
+      "value_present": true
+    },
+    "embeddings_init": {
+      "ok": false,
+      "error": "ValueError(\"infer_schema(func): Parameter input has unsupported type torch.Tensor. The valid types are: dict_keys([<class 'torch.Tensor'>, typing.Optional[torch.Tensor], typing.Sequence[torch.Tensor], typing.List[torch.Tensor], typing.Sequence[typing.Optional[torch.Tensor]], typing.List[typing.Optional[torch.Tensor]], <class 'int'>, typing.Optional[int], typing.Sequence[int], typing.List[int], typing.Optional[typing.Sequence[int]], typing.Optional[typing.List[int]], <class 'float'>, typing.Optional[float], typing.Sequence[float], typing.List[float], typing.Optional[typing.Sequence[float]], typing.Optional[typing.List[float]], <class 'bool'>, typing.Optional[bool], typing.Sequence[bool], typing.List[bool], typing.Optional[typing.Sequence[bool]], typing.Optional[typing.List[bool]], <class 'str'>, typing.Optional[str], typing.Union[int, float, bool], typing.Union[int, float, bool, NoneType], typing.Sequence[typing.Union[int, float, bool]], typing.List[typing.Union[int, float, bool]], <class 'torch.dtype'>, typing.Optional[torch.dtype], <class 'torch.device'>, typing.Optional[torch.device]]). Got func with signature (input: 'torch.Tensor', weight: 'torch.Tensor', offs: 'torch.Tensor') -> 'torch.Tensor')\")"
+    },
+    "vector_collections": {
+      "ok": false,
+      "error": "ValueError(\"infer_schema(func): Parameter input has unsupported type torch.Tensor. The valid types are: dict_keys([<class 'torch.Tensor'>, typing.Optional[torch.Tensor], typing.Sequence[torch.Tensor], typing.List[torch.Tensor], typing.Sequence[typing.Optional[torch.Tensor]], typing.List[typing.Optional[torch.Tensor]], <class 'int'>, typing.Optional[int], typing.Sequence[int], typing.List[int], typing.Optional[typing.Sequence[int]], typing.Optional[typing.List[int]], <class 'float'>, typing.Optional[float], typing.Sequence[float], typing.List[float], typing.Optional[typing.Sequence[float]], typing.Optional[typing.List[float]], <class 'bool'>, typing.Optional[bool], typing.Sequence[bool], typing.List[bool], typing.Optional[typing.Sequence[bool]], typing.Optional[typing.List[bool]], <class 'str'>, typing.Optional[str], typing.Union[int, float, bool], typing.Union[int, float, bool, NoneType], typing.Sequence[typing.Union[int, float, bool]], typing.List[typing.Union[int, float, bool]], <class 'torch.dtype'>, typing.Optional[torch.dtype], <class 'torch.device'>, typing.Optional[torch.device]]). Got func with signature (input: 'torch.Tensor', weight: 'torch.Tensor', offs: 'torch.Tensor') -> 'torch.Tensor')\")"
+    },
+    "ragas_installed": {
+      "ok": true
+    }
+  },
+  "cases": [],
+  "aggregate": {},
+  "ragas": {},
+  "status": "failed",
+  "errors": [
+    "Preflight checks failed"
+  ],
+  "finished_at": "2026-05-27T08:28:01.272524+00:00"
+}
