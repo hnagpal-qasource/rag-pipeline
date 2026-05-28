@@ -18,6 +18,12 @@ pipeline {
       }
     }
 
+    stage('Install Dependencies') {
+      steps {
+        sh 'python3 -m pip install -e . --quiet'
+      }
+    }
+
     stage('Dependency Validation') {
       steps {
         sh 'python3 -V'
