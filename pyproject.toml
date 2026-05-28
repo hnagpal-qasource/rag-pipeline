@@ -11,7 +11,7 @@ dependencies = [
     "langchain",
     "langchain-core",
     "langchain-groq",
-    "langchain-community",
+    "langchain-community<0.3.0",
     "langchain-text-splitters",
     "langchain-google-vertexai",
     "pandas",
