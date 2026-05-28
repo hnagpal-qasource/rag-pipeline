@@ -1,5 +1,18 @@
 pipeline {
-  agent any
+  parameters {
+    string(
+      name: 'NODE_LABEL',
+      defaultValue: 'linux',
+      description: 'Jenkins agent label (e.g. linux, windows, copper-dev-10.10.12.78)'
+    )
+    choice(
+      name: 'NODE_OS',
+      choices: ['linux', 'windows'],
+      description: 'OS type of the target agent — controls whether bat or sh is used'
+    )
+  }
+
+  agent { label params.NODE_LABEL }
 
   options {
     timestamps()
@@ -20,26 +33,51 @@ pipeline {
 
     stage('Install Dependencies') {
       steps {
-        sh 'python3 -m pip install -e . --quiet'
+        script {
+          if (params.NODE_OS == 'windows') {
+            bat 'python -m pip install -e . --quiet'
+          } else {
+            sh 'python3 -m pip install -e . --quiet'
+          }
+        }
       }
     }
 
     stage('Dependency Validation') {
       steps {
-        sh 'python3 -V'
-        sh 'python3 -c "import langchain, langchain_groq, pandas, streamlit, datasets, ragas; print(\\"core_deps_ok\\")"'
+        script {
+          if (params.NODE_OS == 'windows') {
+            bat 'python -V'
+            bat 'python -c "import langchain, langchain_groq, pandas, streamlit, datasets, ragas; print(\\"core_deps_ok\\")"'
+          } else {
+            sh 'python3 -V'
+            sh 'python3 -c "import langchain, langchain_groq, pandas, streamlit, datasets, ragas; print(\\"core_deps_ok\\")"'
+          }
+        }
       }
     }
 
     stage('Unit Validation') {
       steps {
-        sh 'python3 -m unittest discover -s tests -p "test_*.py" -v'
+        script {
+          if (params.NODE_OS == 'windows') {
+            bat 'python -m unittest discover -s tests -p "test_*.py" -v'
+          } else {
+            sh 'python3 -m unittest discover -s tests -p "test_*.py" -v'
+          }
+        }
       }
     }
 
     stage('RAG + RAGAS Validation') {
       steps {
-        sh 'python3 validate_rag_pipeline.py --config ci/validation_config.json --out $VALIDATION_REPORT'
+        script {
+          if (params.NODE_OS == 'windows') {
+            bat 'python validate_rag_pipeline.py --config ci/validation_config.json --out %VALIDATION_REPORT%'
+          } else {
+            sh 'python3 validate_rag_pipeline.py --config ci/validation_config.json --out $VALIDATION_REPORT'
+          }
+        }
       }
       post {
         always {
@@ -50,7 +88,13 @@ pipeline {
 
     stage('AI Quality Gate') {
       steps {
-        sh 'python3 ci/gate_validation.py --report $VALIDATION_REPORT'
+        script {
+          if (params.NODE_OS == 'windows') {
+            bat 'python ci/gate_validation.py --report %VALIDATION_REPORT%'
+          } else {
+            sh 'python3 ci/gate_validation.py --report $VALIDATION_REPORT'
+          }
+        }
       }
     }
 
