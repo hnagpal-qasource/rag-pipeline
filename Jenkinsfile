@@ -35,9 +35,9 @@ pipeline {
       steps {
         script {
           if (params.NODE_OS == 'windows') {
-            bat 'python -m pip install -e . --quiet'
+            bat 'python -m pip install -e . --quiet --upgrade'
           } else {
-            sh 'python3 -m pip install -e . --quiet'
+            sh 'python3 -m pip install -e . --quiet --upgrade'
           }
         }
       }

@@ -20,7 +20,7 @@ dependencies = [
     "fpdf2",
     "pypdf",
     "datasets",
-    "ragas",
+    "ragas>=0.2.0",
 ]
 
 [tool.setuptools.packages.find]
