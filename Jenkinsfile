@@ -144,7 +144,7 @@ pipeline {
           echo 'Checking if application is running on port 8501...'
           if (params.NODE_OS == 'windows') {
             bat 'ping -n 10 127.0.0.1 >nul'
-            bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP. Access it at http://10.10.12.78:8501) || (echo Application failed to start - check streamlit.log)'
+            bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP. Access it at http://10.1.21.233:8501) || (echo Application failed to start - check streamlit.log)'
             bat 'type streamlit.log 2>nul || echo (no streamlit.log)'
           } else {
             sh 'sleep 10'
