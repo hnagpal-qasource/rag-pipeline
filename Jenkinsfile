@@ -115,13 +115,17 @@ pipeline {
       steps {
         script {
           echo 'Deployment approved: AI quality gate passed.'
-          echo 'Starting RAG application on port 8501...'
+          // Write credentials to .env file so Streamlit can read them in background
           if (params.NODE_OS == 'windows') {
             bat 'taskkill /IM streamlit /F 2>nul || ver>nul'
+            bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
+            bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
             bat 'ping -n 4 127.0.0.1 >nul'
             bat 'start /B streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
+            sh "echo GROQ_API_KEY=$GROQ_API_KEY > .env"
+            sh "echo HF_TOKEN=$HF_TOKEN >> .env"
             sh 'sleep 3'
             sh 'nohup streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > streamlit.log 2>&1 &'
           }
