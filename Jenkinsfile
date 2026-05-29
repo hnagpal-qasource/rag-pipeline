@@ -117,16 +117,12 @@ pipeline {
           echo 'Deployment approved: AI quality gate passed.'
           // Write credentials to .env file so Streamlit can read them in background
           if (params.NODE_OS == 'windows') {
-            bat 'taskkill /IM streamlit /F 2>nul || ver>nul'
-            bat 'ping -n 4 127.0.0.1 >nul'
-            // Write .env with credentials (bat has access to Jenkins env vars)
-            bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
-            bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
-            // Write VBScript using bat (avoids Jenkins Groovy interpolation warning).
-            // WScript.Shell.Run with 0,False = hidden, no wait, fully detached from Jenkins job object.
-            bat "echo Set WshShell = CreateObject(\"WScript.Shell\") > start_streamlit.vbs"
-            bat "echo WshShell.Run \"cmd.exe /c cd /d ${WORKSPACE} && streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0\", 0, False >> start_streamlit.vbs"
-            bat 'cscript //nologo start_streamlit.vbs'
+              bat """
+              python -m streamlit run app.py ^
+              --server.port 8501 ^
+              --server.headless true ^
+              --server.address 0.0.0.0 > streamlit.log 2>&1
+              """
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
             sh "echo GROQ_API_KEY=$GROQ_API_KEY > $WORKSPACE/.env"
