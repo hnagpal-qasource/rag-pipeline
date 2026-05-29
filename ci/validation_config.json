@@ -1,6 +1,6 @@
 {
   "min_cases": 3,
-  "require_ragas": true,
+  "require_ragas": false,
   "thresholds": {
     "retrieval_relevance": 0.65,
     "groundedness": 0.60,

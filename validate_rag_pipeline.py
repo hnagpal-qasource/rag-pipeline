@@ -206,7 +206,13 @@ def run_validation(config_path: str | None = None) -> dict:
         "groundedness": sum(groundedness_scores) / len(groundedness_scores),
     }
 
-    ragas_scores, ragas_error = _ragas_metrics(ragas_records)
+    config_require_ragas = config.get("require_ragas", True)
+
+    if config_require_ragas:
+        ragas_scores, ragas_error = _ragas_metrics(ragas_records)
+    else:
+        ragas_scores, ragas_error = {}, None
+
     report["ragas"] = {"scores": ragas_scores, "error": ragas_error}
 
     thresholds = config["thresholds"]
@@ -215,7 +221,7 @@ def run_validation(config_path: str | None = None) -> dict:
         "groundedness": report["aggregate"]["groundedness"] >= thresholds["groundedness"],
     }
 
-    if config.get("require_ragas", True):
+    if config_require_ragas:
         for name in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
             checks[name] = report["ragas"]["scores"].get(name, 0.0) >= thresholds[name]
 
