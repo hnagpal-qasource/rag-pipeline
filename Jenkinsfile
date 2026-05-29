@@ -115,11 +115,24 @@ pipeline {
       steps {
         script {
           echo 'Deployment approved: AI quality gate passed.'
-          // Write credentials to .env file so Streamlit can read them in background
           if (params.NODE_OS == 'windows') {
-               bat '''
-               start "" cmd /c "python -m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > streamlit.log 2>&1"
-                '''
+            // Write .env with credentials for the service to use (Jenkins env vars available in bat)
+            bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
+            bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
+            // Stop and remove existing service if present (ignore errors)
+            bat 'nssm stop rag-streamlit 2>nul & nssm remove rag-streamlit confirm 2>nul || ver>nul'
+            // Download and install nssm if not available
+            bat 'where nssm >nul 2>nul || (curl -sL https://nssm.cc/release/nssm-2.24.zip -o %TEMP%\\nssm.zip && powershell -Command "Expand-Archive -Path $env:TEMP\\nssm.zip -DestinationPath $env:TEMP\\nssm -Force" && copy /Y %TEMP%\\nssm\\nssm-2.24\\win64\\nssm.exe C:\\Windows\\System32\\nssm.exe)'
+            // Create Windows service — runs as SYSTEM, survives pipeline, auto-restarts on crash
+            // Use explicit Python path to ensure SYSTEM user can find it
+            bat 'nssm install rag-streamlit "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe" "-m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0"'
+            bat "nssm set rag-streamlit AppDirectory ${WORKSPACE}"
+            bat "nssm set rag-streamlit AppStdout ${WORKSPACE}\\streamlit_service.log"
+            bat "nssm set rag-streamlit AppStderr ${WORKSPACE}\\streamlit_service.log"
+            bat 'nssm set rag-streamlit AppExit Default Exit'
+            bat 'nssm set rag-streamlit Start SERVICE_AUTO_START'
+            bat 'nssm start rag-streamlit'
+            echo 'Service rag-streamlit created and started. Access at http://10.1.21.233:8501'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
             sh "echo GROQ_API_KEY=$GROQ_API_KEY > $WORKSPACE/.env"
