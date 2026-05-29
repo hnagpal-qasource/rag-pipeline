@@ -107,7 +107,6 @@ def _ragas_metrics(records: list[dict]) -> tuple[dict, str | None]:
         from ragas import evaluate
         from ragas.metrics import answer_relevancy, context_precision, context_recall, faithfulness
 
-        ds = Dataset.from_list(records)
         judge_llm = ChatGroq(
             model="llama-3.3-70b-versatile",
             temperature=0,
@@ -117,20 +116,36 @@ def _ragas_metrics(records: list[dict]) -> tuple[dict, str | None]:
         )
         local_embeddings = _HashEmbeddings(dim=256)
 
-        result = evaluate(
-            ds,
-            metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
-            llm=judge_llm,
-            embeddings=local_embeddings,
-            batch_size=1,  # Run 1 at a time to avoid Groq rate limits / timeouts
-        )
-        metric_scores = result.to_pandas().mean(numeric_only=True).to_dict()
-        normalized = {
-            "faithfulness": float(metric_scores.get("faithfulness", 0.0)),
-            "answer_relevancy": float(metric_scores.get("answer_relevancy", 0.0)),
-            "context_precision": float(metric_scores.get("context_precision", 0.0)),
-            "context_recall": float(metric_scores.get("context_recall", 0.0)),
+        # Evaluate one record at a time to avoid ragas parallel timeout on slow networks.
+        # ragas 0.1.x has no batch_size param — it uses joblib internally and
+        # the 3-minute default timeout kills all jobs when the network is slow.
+        all_scores: dict[str, list[float]] = {
+            "faithfulness": [],
+            "answer_relevancy": [],
+            "context_precision": [],
+            "context_recall": [],
         }
+
+        for i, record in enumerate(records):
+            print(f"    RAGAS evaluating record {i+1}/{len(records)}: {record['question'][:40]}...")
+            try:
+                single_ds = Dataset.from_list([record])
+                result = evaluate(
+                    single_ds,
+                    metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+                    llm=judge_llm,
+                    embeddings=local_embeddings,
+                )
+                row = result.to_pandas()
+                for metric in all_scores:
+                    val = row[metric].mean()
+                    all_scores[metric].append(float(val) if not (val != val) else 0.0)
+            except Exception as e:
+                print(f"    WARNING: RAGAS failed on record {i+1}: {e}")
+                for metric in all_scores:
+                    all_scores[metric].append(0.0)
+
+        normalized = {k: sum(v) / len(v) if v else 0.0 for k, v in all_scores.items()}
         return normalized, None
     except Exception:
         return {}, traceback.format_exc()
