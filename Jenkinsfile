@@ -113,7 +113,18 @@ pipeline {
         expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        echo 'Deployment approved: AI quality gate passed.'
+        script {
+          echo 'Deployment approved: AI quality gate passed.'
+          echo 'Starting RAG application on port 8501...'
+          if (params.NODE_OS == 'windows') {
+            // Kill any existing process on port 8501, then start Streamlit
+            bat 'for /f "tokens=5" %a in (\'netstat -ano ^| findstr :8501\') do (taskkill /F /PID %a >nul 2>&1) || ver>nul'
+            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1'
+          } else {
+            sh 'fuser -k 8501/tcp 2>/dev/null || true'
+            sh 'nohup streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &'
+          }
+        }
       }
     }
 
@@ -122,9 +133,19 @@ pipeline {
         expression { currentBuild.currentResult == null || currentBuild.currentResult == 'SUCCESS' }
       }
       steps {
-        echo 'Run service health checks here (HTTP readiness, synthetic query checks).'
+        script {
+          echo 'Checking if application is running on port 8501...'
+          if (params.NODE_OS == 'windows') {
+            bat 'timeout /t 5 /nobreak >nul'
+            bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP on http://localhost:8501) || (echo Application failed to start)'
+          } else {
+            sh 'sleep 5'
+            sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8501 || echo "Application failed to start"'
+          }
+        }
       }
     }
+
   }
 
   post {
