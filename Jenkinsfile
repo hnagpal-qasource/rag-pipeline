@@ -117,10 +117,12 @@ pipeline {
           echo 'Deployment approved: AI quality gate passed.'
           echo 'Starting RAG application on port 8501...'
           if (params.NODE_OS == 'windows') {
-            bat 'taskkill /IM streamlit /F 2>nul & timeout /t 3 /nobreak >nul'
-            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1'
+            bat 'taskkill /IM streamlit /F 2>nul'
+            bat 'ping -n 4 127.0.0.1 >nul'
+            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
+            sh 'sleep 3'
             sh 'nohup streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &'
           }
         }
@@ -135,7 +137,7 @@ pipeline {
         script {
           echo 'Checking if application is running on port 8501...'
           if (params.NODE_OS == 'windows') {
-            bat 'timeout /t 5 /nobreak >nul'
+            bat 'ping -n 6 127.0.0.1 >nul'
             bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP on http://localhost:8501) || (echo Application failed to start)'
           } else {
             sh 'sleep 5'
