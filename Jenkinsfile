@@ -117,7 +117,7 @@ pipeline {
           echo 'Deployment approved: AI quality gate passed.'
           echo 'Starting RAG application on port 8501...'
           if (params.NODE_OS == 'windows') {
-            bat 'taskkill /IM streamlit /F 2>nul'
+            bat 'taskkill /IM streamlit /F 2>nul || ver>nul'
             bat 'ping -n 4 127.0.0.1 >nul'
             bat 'start /B streamlit run app.py --server.port 8501 --server.headless true'
           } else {
