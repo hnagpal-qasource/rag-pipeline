@@ -118,14 +118,19 @@ pipeline {
           // Write credentials to .env file so Streamlit can read them in background
           if (params.NODE_OS == 'windows') {
             bat 'taskkill /IM streamlit /F 2>nul || ver>nul'
-            bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
-            bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
             bat 'ping -n 4 127.0.0.1 >nul'
-            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0'
+            // Write .env with credentials so background Streamlit has the API key
+            writeFile file: '.env', text: "GROQ_API_KEY=${GROQ_API_KEY}\nHF_TOKEN=${HF_TOKEN}\n"
+            // Write a launcher .bat that starts Streamlit outside Jenkins job object
+            writeFile file: 'start_streamlit.bat', text: '''@echo off
+cd /d E:\jenkins\workspace\rag-pipeline
+streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0
+'''
+            bat 'START "" /MIN start_streamlit.bat'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
-            sh "echo GROQ_API_KEY=$GROQ_API_KEY > .env"
-            sh "echo HF_TOKEN=$HF_TOKEN >> .env"
+            sh "echo GROQ_API_KEY=$GROQ_API_KEY > $WORKSPACE/.env"
+            sh "echo HF_TOKEN=$HF_TOKEN >> $WORKSPACE/.env"
             sh 'sleep 3'
             sh 'nohup streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > streamlit.log 2>&1 &'
           }
