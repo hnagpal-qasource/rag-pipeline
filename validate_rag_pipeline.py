@@ -109,11 +109,11 @@ def _ragas_metrics(records: list[dict]) -> tuple[dict, str | None]:
 
         ds = Dataset.from_list(records)
         judge_llm = ChatGroq(
-            model="qwen/qwen3-32b",
+            model="llama-3.3-70b-versatile",
             temperature=0,
-            max_tokens=512,
-            timeout=60,
-            max_retries=2,
+            max_tokens=1024,
+            timeout=120,
+            max_retries=3,
         )
         local_embeddings = _HashEmbeddings(dim=256)
 
