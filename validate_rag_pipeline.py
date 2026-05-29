@@ -122,6 +122,7 @@ def _ragas_metrics(records: list[dict]) -> tuple[dict, str | None]:
             metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
             llm=judge_llm,
             embeddings=local_embeddings,
+            batch_size=1,  # Run 1 at a time to avoid Groq rate limits / timeouts
         )
         metric_scores = result.to_pandas().mean(numeric_only=True).to_dict()
         normalized = {
