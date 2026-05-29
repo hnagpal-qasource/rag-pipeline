@@ -119,12 +119,12 @@ pipeline {
             // Write .env with credentials for the service to use
             bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
             bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
-            // Download nssm only if not already installed (one-time)
-            bat 'where nssm >nul 2>nul || (curl -sL https://nssm.cc/release/nssm-2.24.zip -o %TEMP%\\nssm.zip && powershell -Command "Expand-Archive -Path $env:TEMP\\nssm.zip -DestinationPath $env:TEMP\\nssm -Force" && copy /Y %TEMP%\\nssm\\nssm-2.24\\win64\\nssm.exe C:\\Windows\\System32\\nssm.exe)'
-            // Check if service already exists
-            bat 'nssm status rag-streamlit >nul 2>&1 && (echo Service exists - restarting) || (echo Creating service for first time...)'
-            // Create service only on first run; on subsequent runs just restart
-            bat 'sc query rag-streamlit >nul 2>&1 && (nssm restart rag-streamlit) || (nssm install rag-streamlit "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe" "-m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0" && nssm set rag-streamlit AppDirectory "%WORKSPACE%" && nssm set rag-streamlit AppStdout "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppStderr "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppExit Default Exit && nssm set rag-streamlit Start SERVICE_AUTO_START && nssm start rag-streamlit)'
+            // Download nssm if not already installed (runs only once ever)
+            bat 'where nssm >nul 2>nul || (curl -sL https://nssm.cc/release/nssm-2.24.zip -o %TEMP%\\nssm.zip && powershell -Command "Expand-Archive -Path $env:TEMP\\nssm.zip -DestinationPath $env:TEMP\\nssm -Force" && copy /Y %TEMP%\\nssm\\nssm-2.24\\win64\\nssm.exe C:\\Windows\\System32\\nssm.exe) || ver>nul'
+            // Check if service exists and create it if not (safe wrapper around sc query)
+            bat 'sc query rag-streamlit >nul 2>&1 && (echo service_exists) || (echo creating_service && nssm install rag-streamlit "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe" "-m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0" && nssm set rag-streamlit AppDirectory "%WORKSPACE%" && nssm set rag-streamlit AppStdout "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppStderr "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppExit Default Exit && nssm set rag-streamlit Start SERVICE_AUTO_START && echo service_created) || ver>nul'
+            // Start or restart the service (safe wrapper)
+            bat 'nssm restart rag-streamlit || nssm start rag-streamlit || ver>nul'
             echo 'Streamlit running as Windows service. Access at http://10.1.21.233:8501'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
