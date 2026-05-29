@@ -117,12 +117,9 @@ pipeline {
           echo 'Deployment approved: AI quality gate passed.'
           // Write credentials to .env file so Streamlit can read them in background
           if (params.NODE_OS == 'windows') {
-              bat """
-              python -m streamlit run app.py ^
-              --server.port 8501 ^
-              --server.headless true ^
-              --server.address 0.0.0.0 > streamlit.log 2>&1
-              """
+               bat '''
+               start "" cmd /c "python -m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > streamlit.log 2>&1"
+                '''
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
             sh "echo GROQ_API_KEY=$GROQ_API_KEY > $WORKSPACE/.env"
