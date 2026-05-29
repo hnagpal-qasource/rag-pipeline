@@ -119,11 +119,11 @@ pipeline {
           if (params.NODE_OS == 'windows') {
             bat 'taskkill /IM streamlit /F 2>nul || ver>nul'
             bat 'ping -n 4 127.0.0.1 >nul'
-            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true'
+            bat 'start /B streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
             sh 'sleep 3'
-            sh 'nohup streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &'
+            sh 'nohup streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 > streamlit.log 2>&1 &'
           }
         }
       }
@@ -137,11 +137,12 @@ pipeline {
         script {
           echo 'Checking if application is running on port 8501...'
           if (params.NODE_OS == 'windows') {
-            bat 'ping -n 6 127.0.0.1 >nul'
-            bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP on http://localhost:8501) || (echo Application failed to start)'
+            bat 'ping -n 10 127.0.0.1 >nul'
+            bat 'curl -s http://localhost:8501 >nul 2>&1 && (echo Application is UP. Access it at http://10.10.12.78:8501) || (echo Application failed to start - check streamlit.log)'
+            bat 'type streamlit.log 2>nul || echo (no streamlit.log)'
           } else {
-            sh 'sleep 5'
-            sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8501 || echo "Application failed to start"'
+            sh 'sleep 10'
+            sh 'curl -s -o /dev/null -w "%{http_code}" http://localhost:8501 && echo " - Access at http://10.10.12.78:8501" || echo "Application failed to start"'
           }
         }
       }
