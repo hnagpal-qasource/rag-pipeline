@@ -24,3 +24,30 @@ def groundedness_score(answer: str, contexts: list[str]) -> float:
         return 0.0
     overlap = answer_tokens.intersection(context_tokens)
     return len(overlap) / len(answer_tokens)
+
+
+def refusal_score(answer: str) -> float:
+    """Return 1.0 if the answer contains a refusal signal, 0.0 otherwise."""
+    if not answer:
+        return 0.0
+    answer_lower = answer.lower()
+    refusal_phrases = [
+        "i don't know",
+        "i cannot answer",
+        "cannot answer",
+        "i'm sorry",
+        "i am sorry",
+        "sorry",
+        "not enough information",
+        "does not contain enough information",
+        "do not have that information",
+        "i don't have",
+        "not in the context",
+        "outside the scope",
+        "i can't answer",
+        "can't answer that",
+    ]
+    for phrase in refusal_phrases:
+        if phrase in answer_lower:
+            return 1.0
+    return 0.0

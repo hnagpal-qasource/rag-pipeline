@@ -18,7 +18,7 @@ from rag_chain import build_chain
 from retriever import build_retriever
 from validation.config import load_config
 from validation.dataset import default_eval_cases
-from validation.metrics import groundedness_score, retrieval_relevance_score
+from validation.metrics import groundedness_score, refusal_score, retrieval_relevance_score
 
 
 class _HashEmbeddings(Embeddings):
@@ -135,7 +135,7 @@ def _ragas_metrics(records: list[dict]) -> tuple[dict, str | None]:
         return {}, traceback.format_exc()
 
 
-def run_validation(config_path: str | None = None) -> dict:
+def run_validation(config_path: str | None = None, eval_cases: list | None = None) -> dict:
     load_dotenv()
     config = load_config(config_path)
 
@@ -156,7 +156,8 @@ def run_validation(config_path: str | None = None) -> dict:
         report["finished_at"] = _utc_now()
         return report
 
-    eval_cases = default_eval_cases()
+    if eval_cases is None:
+        eval_cases = default_eval_cases()
     if len(eval_cases) < config["min_cases"]:
         report["errors"].append(
             f"Dataset has {len(eval_cases)} cases but min_cases is {config['min_cases']}"
@@ -169,6 +170,7 @@ def run_validation(config_path: str | None = None) -> dict:
 
     retrieval_scores = []
     groundedness_scores = []
+    refusal_correct = []
     ragas_records = []
 
     for case in eval_cases:
@@ -178,9 +180,17 @@ def run_validation(config_path: str | None = None) -> dict:
 
         relevance = retrieval_relevance_score(contexts, case.required_keywords)
         grounded = groundedness_score(answer, contexts)
+        refused = refusal_score(answer)
 
         retrieval_scores.append(relevance)
         groundedness_scores.append(grounded)
+
+        # For positive cases: system should NOT refuse (refusal should be absent)
+        # For negative cases: system SHOULD refuse (refusal should be present)
+        if case.expects_refusal:
+            refusal_correct.append(1.0 if refused >= 0.5 else 0.0)
+        else:
+            refusal_correct.append(1.0 if refused < 0.5 else 0.0)
 
         ragas_records.append(
             {
@@ -197,6 +207,8 @@ def run_validation(config_path: str | None = None) -> dict:
                 "retrieved_docs": len(docs),
                 "retrieval_relevance": relevance,
                 "groundedness": grounded,
+                "refusal_detected": bool(refused >= 0.5),
+                "refusal_correct": refusal_correct[-1] == 1.0,
                 "answer_preview": answer[:240],
             }
         )
@@ -204,6 +216,7 @@ def run_validation(config_path: str | None = None) -> dict:
     report["aggregate"] = {
         "retrieval_relevance": sum(retrieval_scores) / len(retrieval_scores),
         "groundedness": sum(groundedness_scores) / len(groundedness_scores),
+        "refusal_accuracy": sum(refusal_correct) / len(refusal_correct),
     }
 
     config_require_ragas = config.get("require_ragas", True)
@@ -219,6 +232,7 @@ def run_validation(config_path: str | None = None) -> dict:
     checks = {
         "retrieval_relevance": report["aggregate"]["retrieval_relevance"] >= thresholds["retrieval_relevance"],
         "groundedness": report["aggregate"]["groundedness"] >= thresholds["groundedness"],
+        "refusal_accuracy": report["aggregate"]["refusal_accuracy"] >= thresholds["refusal_accuracy"],
     }
 
     if config_require_ragas:
@@ -239,9 +253,24 @@ def main() -> int:
         default="reports/validation_report.json",
         help="Path to output JSON report",
     )
+    parser.add_argument(
+        "--test-type",
+        choices=["positive", "negative", "all"],
+        default="all",
+        help="Which test cases to run: positive (in-scope), negative (edge/refusal), or all",
+    )
     args = parser.parse_args()
 
-    report = run_validation(args.config)
+    # Filter cases based on test type
+    all_cases = default_eval_cases()
+    if args.test_type == "positive":
+        eval_cases = [c for c in all_cases if not c.expects_refusal]
+    elif args.test_type == "negative":
+        eval_cases = [c for c in all_cases if c.expects_refusal]
+    else:
+        eval_cases = all_cases
+
+    report = run_validation(args.config, eval_cases=eval_cases)
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")

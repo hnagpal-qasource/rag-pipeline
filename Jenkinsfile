@@ -10,6 +10,11 @@ pipeline {
       choices: ['windows', 'linux'],
       description: 'OS type of the target agent — controls whether bat or sh is used'
     )
+    choice(
+      name: 'TEST_TYPE',
+      choices: ['all', 'positive', 'negative'],
+      description: 'Test type: all (both), positive (in-scope questions), negative (edge/refusal cases)'
+    )
   }
 
   agent { label params.NODE_LABEL }
@@ -78,9 +83,9 @@ pipeline {
       steps {
         script {
           if (params.NODE_OS == 'windows') {
-            bat 'python validate_rag_pipeline.py --config ci/validation_config.json --out %VALIDATION_REPORT%'
+            bat "python validate_rag_pipeline.py --config ci/validation_config.json --out %VALIDATION_REPORT% --test-type ${params.TEST_TYPE}"
           } else {
-            sh 'python3 validate_rag_pipeline.py --config ci/validation_config.json --out $VALIDATION_REPORT'
+            sh "python3 validate_rag_pipeline.py --config ci/validation_config.json --out \$VALIDATION_REPORT --test-type ${params.TEST_TYPE}"
           }
         }
       }
