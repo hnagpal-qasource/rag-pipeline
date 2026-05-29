@@ -122,10 +122,10 @@ pipeline {
             // Write .env with credentials so background Streamlit has the API key
             writeFile file: '.env', text: "GROQ_API_KEY=${GROQ_API_KEY}\nHF_TOKEN=${HF_TOKEN}\n"
             // Write a launcher .bat that starts Streamlit outside Jenkins job object
-            writeFile file: 'start_streamlit.bat', text: '''@echo off
-cd /d E:\jenkins\workspace\rag-pipeline
+            writeFile file: 'start_streamlit.bat', text: """@echo off
+cd /d ${WORKSPACE}
 streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0
-'''
+"""
             bat 'START "" /MIN start_streamlit.bat'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
