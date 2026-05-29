@@ -117,11 +117,10 @@ pipeline {
           echo 'Deployment approved: AI quality gate passed.'
           echo 'Starting RAG application on port 8501...'
           if (params.NODE_OS == 'windows') {
-            // Kill any existing process on port 8501, then start Streamlit
-            bat 'for /f "tokens=5" %a in (\'netstat -ano ^| findstr :8501\') do (taskkill /F /PID %a >nul 2>&1) || ver>nul'
+            bat 'taskkill /IM streamlit /F 2>nul & timeout /t 3 /nobreak >nul'
             bat 'start /B streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1'
           } else {
-            sh 'fuser -k 8501/tcp 2>/dev/null || true'
+            sh 'pkill -f streamlit 2>/dev/null || true'
             sh 'nohup streamlit run app.py --server.port 8501 --server.headless true > streamlit.log 2>&1 &'
           }
         }
