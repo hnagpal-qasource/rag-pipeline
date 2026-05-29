@@ -22,6 +22,8 @@ pipeline {
   environment {
     PYTHONUNBUFFERED = '1'
     VALIDATION_REPORT = 'reports/validation_report.json'
+    GROQ_API_KEY = credentials('GROQ_API_KEY')
+    HF_TOKEN = credentials('HF_TOKEN')
   }
 
   stages {
