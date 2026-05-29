@@ -116,23 +116,16 @@ pipeline {
         script {
           echo 'Deployment approved: AI quality gate passed.'
           if (params.NODE_OS == 'windows') {
-            // Write .env with credentials for the service to use (Jenkins env vars available in bat)
+            // Write .env with credentials for the service to use
             bat "echo GROQ_API_KEY=%GROQ_API_KEY% > .env"
             bat "echo HF_TOKEN=%HF_TOKEN% >> .env"
-            // Stop and remove existing service if present (ignore errors)
-            bat 'nssm stop rag-streamlit 2>nul & nssm remove rag-streamlit confirm 2>nul || ver>nul'
-            // Download and install nssm if not available
+            // Download nssm only if not already installed (one-time)
             bat 'where nssm >nul 2>nul || (curl -sL https://nssm.cc/release/nssm-2.24.zip -o %TEMP%\\nssm.zip && powershell -Command "Expand-Archive -Path $env:TEMP\\nssm.zip -DestinationPath $env:TEMP\\nssm -Force" && copy /Y %TEMP%\\nssm\\nssm-2.24\\win64\\nssm.exe C:\\Windows\\System32\\nssm.exe)'
-            // Create Windows service — runs as SYSTEM, survives pipeline, auto-restarts on crash
-            // Use explicit Python path to ensure SYSTEM user can find it
-            bat 'nssm install rag-streamlit "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe" "-m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0"'
-            bat "nssm set rag-streamlit AppDirectory ${WORKSPACE}"
-            bat "nssm set rag-streamlit AppStdout ${WORKSPACE}\\streamlit_service.log"
-            bat "nssm set rag-streamlit AppStderr ${WORKSPACE}\\streamlit_service.log"
-            bat 'nssm set rag-streamlit AppExit Default Exit'
-            bat 'nssm set rag-streamlit Start SERVICE_AUTO_START'
-            bat 'nssm start rag-streamlit'
-            echo 'Service rag-streamlit created and started. Access at http://10.1.21.233:8501'
+            // Check if service already exists
+            bat 'nssm status rag-streamlit >nul 2>&1 && (echo Service exists - restarting) || (echo Creating service for first time...)'
+            // Create service only on first run; on subsequent runs just restart
+            bat 'sc query rag-streamlit >nul 2>&1 && (nssm restart rag-streamlit) || (nssm install rag-streamlit "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python311\\python.exe" "-m streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0" && nssm set rag-streamlit AppDirectory "%WORKSPACE%" && nssm set rag-streamlit AppStdout "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppStderr "%WORKSPACE%\\streamlit_service.log" && nssm set rag-streamlit AppExit Default Exit && nssm set rag-streamlit Start SERVICE_AUTO_START && nssm start rag-streamlit)'
+            echo 'Streamlit running as Windows service. Access at http://10.1.21.233:8501'
           } else {
             sh 'pkill -f streamlit 2>/dev/null || true'
             sh "echo GROQ_API_KEY=$GROQ_API_KEY > $WORKSPACE/.env"
